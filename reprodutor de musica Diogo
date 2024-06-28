@@ -1,0 +1,100 @@
+import tkinter as tk
+from tkinter import filedialog
+import os
+import pygame
+
+class MusicPlayer:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Reprodutor de Música")
+        self.root.geometry("400x300")
+
+        pygame.mixer.init()
+
+        self.playlist = []
+        self.current_index = 0
+
+        self.create_widgets()
+
+    def create_widgets(self):
+        # Frame para listar músicas
+        self.music_frame = tk.Frame(self.root)
+        self.music_frame.pack(pady=20)
+
+        # Lista de músicas
+        self.music_listbox = tk.Listbox(self.music_frame, bg="light grey", width=60, selectbackground="green")
+        self.music_listbox.pack()
+
+        # Botões de controle
+        self.controls_frame = tk.Frame(self.root)
+        self.controls_frame.pack(pady=20)
+
+        self.play_button = tk.Button(self.controls_frame, text="▶ Play", command=self.play_music)
+        self.play_button.grid(row=0, column=0, padx=10)
+
+        self.pause_button = tk.Button(self.controls_frame, text="⏸ Pause", command=self.pause_music)
+        self.pause_button.grid(row=0, column=1, padx=10)
+
+        self.stop_button = tk.Button(self.controls_frame, text="⏹ Stop", command=self.stop_music)
+        self.stop_button.grid(row=0, column=2, padx=10)
+
+        self.previous_button = tk.Button(self.controls_frame, text="⏮ Previous", command=self.previous_music)
+        self.previous_button.grid(row=1, column=0, padx=10, pady=10)
+
+        self.next_button = tk.Button(self.controls_frame, text="⏭ Next", command=self.next_music)
+        self.next_button.grid(row=1, column=1, padx=10, pady=10)
+
+        # Botão para adicionar música
+        self.add_button = tk.Button(self.controls_frame, text="Adicionar Música", command=self.add_music)
+        self.add_button.grid(row=1, column=2, padx=10, pady=10)
+
+        # Barra de progresso
+        self.progress_bar = tk.Scale(self.controls_frame, from_=0, to=100, orient=tk.HORIZONTAL, command=self.set_progress)
+        self.progress_bar.grid(row=2, column=0, columnspan=3, padx=10, pady=10)
+
+    def add_music(self):
+        file = filedialog.askopenfilename(defaultextension=".mp3", filetypes=[("Arquivos MP3", "*.mp3")])
+        if file:
+            self.playlist.append(file)
+            song_name = os.path.basename(file)
+            self.music_listbox.insert(tk.END, song_name)
+
+    def play_music(self):
+        selected_index = self.music_listbox.curselection()
+        if selected_index:
+            music_index = selected_index[0]
+            self.current_index = music_index
+            music_file = self.playlist[music_index]
+
+            pygame.mixer.music.load(music_file)
+            pygame.mixer.music.play(loops=0)
+
+    def pause_music(self):
+        pygame.mixer.music.pause()
+
+    def stop_music(self):
+        pygame.mixer.music.stop()
+
+    def next_music(self):
+        self.current_index = (self.current_index + 1) % len(self.playlist)
+        music_file = self.playlist[self.current_index]
+
+        pygame.mixer.music.load(music_file)
+        pygame.mixer.music.play(loops=0)
+
+    def previous_music(self):
+        self.current_index = (self.current_index - 1) % len(self.playlist)
+        music_file = self.playlist[self.current_index]
+
+        pygame.mixer.music.load(music_file)
+        pygame.mixer.music.play(loops=0)
+
+    def set_progress(self, val):
+        if pygame.mixer.music.get_busy():
+            music_length = pygame.mixer.music.get_pos() / 1000
+            pygame.mixer.music.set_pos(float(val) * music_length / 100)
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    mp = MusicPlayer(root)
+    root.mainloop()
